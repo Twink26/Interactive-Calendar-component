@@ -15,65 +15,118 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at 0% 0%, #f8f8fa 0%, #ececf0 40%, #e9e9ee 100%);
+  background: radial-gradient(circle at 0% 0%, #000000 0%, #f7f3f3 40%, #000000 100%);
   color: var(--foreground);
   font-family: "Segoe UI", Arial, Helvetica, sans-serif;
 }
 
+/* ── Root & Card ── */
 .wall-root {
   min-height: 100vh;
   display: grid;
-  place-items: center;
-  padding: 1.25rem;
+  place-items: start center;
+  padding: 2rem 1.25rem;
 }
 
 .wall-card {
   width: min(980px, 100%);
+  max-width: 980px;
+  margin: 0 auto;
   background: #ffffff;
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 30px 80px rgba(8, 15, 40, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
   animation: float-in 500ms ease;
 }
 
+/* ── Spiral binding ── */
+.spiral-strip {
+  width: 100%;
+  background: #3b3d42;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0.3rem 2rem;
+  border-bottom: 2px solid #78797b;
+  flex-shrink: 0;
+}
+
+.spiral-ring {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid #8a96ae;
+  background: transparent;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+/* ── Hero image ── */
 .wall-hero {
   position: relative;
-  min-height: 300px;
-  background: #f4f6fa;
+  width: 100%;
+  height: 280px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: #1a2540;
 }
 
 .hero-image {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  filter: saturate(1.05);
+  object-position: center;
+  display: block;
+  filter: saturate(1.08) brightness(0.92);
 }
 
-.hero-overlay {
+/* ── Diagonal wedge ── */
+.hero-wedge {
   position: absolute;
-  right: 1.25rem;
-  bottom: 1rem;
-  color: white;
-  text-align: right;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+  bottom: 0;
+  right: 0;
+  width: 260px;
+  height: 110px;
+  background: #2563eb;
+  clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 1rem 1.25rem;
 }
 
-.hero-overlay h1 {
-  margin: 0;
-  font-size: clamp(1.2rem, 2.5vw, 1.8rem);
-  letter-spacing: 0.03em;
+.hero-wedge-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #fff;
+  line-height: 1.1;
 }
 
 .hero-year {
-  margin: 0;
-  opacity: 0.9;
+  font-size: 0.95rem;
   font-weight: 600;
+  opacity: 0.85;
+  letter-spacing: 0.08em;
+  margin: 0;
 }
 
+.hero-month {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+/* ── Content area ── */
 .wall-content {
   display: grid;
   grid-template-columns: 1.3fr 1fr;
   gap: 1rem;
   padding: 1.25rem;
+  background: #efeff2;
 }
 
 .calendar-pane,
@@ -84,6 +137,7 @@ body {
   background: #fff;
 }
 
+/* ── Toolbar ── */
 .calendar-toolbar,
 .notes-top {
   display: flex;
@@ -109,6 +163,7 @@ body {
   border-color: #b8cff9;
 }
 
+/* ── Week header ── */
 .week-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -119,6 +174,7 @@ body {
   color: #6b7280;
 }
 
+/* ── Calendar grid ── */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -136,7 +192,9 @@ body {
   gap: 0.12rem;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 180ms ease;
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  position: relative;
+  z-index: 0;
 }
 
 .day-cell small {
@@ -159,17 +217,52 @@ body {
   box-shadow: inset 0 0 0 1px #8cb6ff;
 }
 
+/* ── Range selection ── */
+
+/* Mid-range band */
 .day-cell.in-range {
-  background: #e9f2ff;
+  background: #dbeafe;
+  border-color: transparent;
+  border-radius: 0;
+  z-index: 1;
 }
 
-.day-cell.range-start,
+/* Round left edge at row boundary */
+.day-cell.in-range.row-edge-left,
+.day-cell.range-start.row-edge-left {
+  border-radius: 10px 0 0 10px;
+}
+
+/* Round right edge at row boundary */
+.day-cell.in-range.row-edge-right,
+.day-cell.range-end.row-edge-right {
+  border-radius: 0 10px 10px 0;
+}
+
+/* Start date — rounded left, flat right */
+.day-cell.range-start {
+  background: linear-gradient(135deg, #31a6ff, #3f7bff);
+  color: #fff;
+  border-color: transparent;
+  border-radius: 10px 0 0 10px;
+  z-index: 2;
+}
+
+/* End date — flat left, rounded right */
 .day-cell.range-end {
   background: linear-gradient(135deg, #31a6ff, #3f7bff);
   color: #fff;
   border-color: transparent;
+  border-radius: 0 10px 10px 0;
+  z-index: 2;
 }
 
+/* Single day selected */
+.day-cell.range-start.range-end {
+  border-radius: 10px;
+}
+
+/* ── Notes pane ── */
 .notes-pane h2 {
   margin: 0;
   font-size: 1rem;
@@ -197,6 +290,7 @@ body {
   );
   line-height: 26px;
   outline: 1px solid #d8deea;
+  box-sizing: border-box;
 }
 
 .notes-footer {
@@ -206,6 +300,7 @@ body {
   color: #6b7280;
 }
 
+/* ── Dark theme ── */
 .theme-dark .wall-card {
   background: #121722;
   border-color: rgba(148, 163, 184, 0.12);
@@ -213,6 +308,19 @@ body {
 
 .theme-dark .wall-hero {
   background: #0f1726;
+}
+
+.theme-dark .wall-content {
+  background: #0d1220;
+}
+
+.theme-dark .spiral-strip {
+  background: #1a2236;
+  border-color: #2a3550;
+}
+
+.theme-dark .spiral-ring {
+  border-color: #4a5a78;
 }
 
 .theme-dark .calendar-pane,
@@ -244,6 +352,10 @@ body {
   color: #627090;
 }
 
+.theme-dark .day-cell.in-range {
+  background: #1e3a5f;
+}
+
 .theme-dark .notes-input {
   background: repeating-linear-gradient(
     to bottom,
@@ -255,20 +367,36 @@ body {
   outline-color: #2f3f63;
 }
 
+/* ── Responsive ── */
 @media (max-width: 860px) {
   .wall-content {
     grid-template-columns: 1fr;
   }
 
   .wall-hero {
-    min-height: 240px;
+    height: 220px;
+  }
+
+  .hero-wedge {
+    width: 200px;
+    height: 85px;
+  }
+
+  .hero-month {
+    font-size: 1.2rem;
   }
 
   .notes-input {
     min-height: 170px;
   }
+
+  .spiral-ring {
+    width: 18px;
+    height: 18px;
+  }
 }
 
+/* ── Animation ── */
 @keyframes float-in {
   from {
     opacity: 0;

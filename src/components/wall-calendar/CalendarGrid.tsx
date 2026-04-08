@@ -48,7 +48,7 @@ export default function CalendarGrid({
       </div>
 
       <div className="calendar-grid">
-        {days.map(({ date, inCurrentMonth }) => {
+        {days.map(({ date, inCurrentMonth }, idx) => {
           const holiday = getHolidayLabel(date);
           const isStart = isSameDay(startDate, date);
           const isEnd = isSameDay(endDate, date);
@@ -56,8 +56,13 @@ export default function CalendarGrid({
           const isInRange =
             !!rangeStart &&
             !!rangeEnd &&
-            stripTime(date) >= stripTime(rangeStart) &&
-            stripTime(date) <= stripTime(rangeEnd);
+            stripTime(date) > stripTime(rangeStart) &&
+            stripTime(date) < stripTime(rangeEnd);
+
+     
+          const colIndex = idx % 7;
+          const isRowStart = colIndex === 0;
+          const isRowEnd = colIndex === 6;
 
           return (
             <button
@@ -73,7 +78,11 @@ export default function CalendarGrid({
                 isInRange ? "in-range" : "",
                 isStart ? "range-start" : "",
                 isEnd ? "range-end" : "",
-              ].join(" ")}
+                (isInRange || isStart || isEnd) && isRowStart ? "row-edge-left" : "",
+                (isInRange || isStart || isEnd) && isRowEnd ? "row-edge-right" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               aria-label={formatDate(date)}
             >
               <span>{date.getDate()}</span>
