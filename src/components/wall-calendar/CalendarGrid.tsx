@@ -13,7 +13,7 @@ type CalendarGridProps = {
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onDayHover: (date: Date | null) => void;
-  onDayClick: (date: Date) => void;
+  onDayClick: (date: Date, withRange: boolean) => void;
 };
 
 export default function CalendarGrid({
@@ -70,7 +70,7 @@ export default function CalendarGrid({
               type="button"
               onMouseEnter={() => onDayHover(stripTime(date))}
               onMouseLeave={() => onDayHover(null)}
-              onClick={() => onDayClick(date)}
+              onClick={(event) => onDayClick(date, event.shiftKey)}
               className={[
                 "day-cell",
                 inCurrentMonth ? "current" : "faded",
