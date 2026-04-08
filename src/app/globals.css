@@ -119,6 +119,36 @@ body {
   font-weight: 700;
 }
 
+.sidebar-note-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.sidebar-note-delete {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+}
+
+.sidebar-note-delete svg {
+  width: 13px;
+  height: 13px;
+}
+
+.sidebar-note-delete:hover {
+  color: var(--accent-2);
+  background: color-mix(in srgb, var(--border) 65%, transparent);
+}
+
 .sidebar-note-preview {
   margin: 0;
   font-size: 0.76rem;
@@ -309,7 +339,7 @@ body {
 .day-cell.range-start,
 .day-cell.range-end {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #3a0519;
+  color: #05093a;
 }
 
 .day-cell.in-range.row-edge-left,
@@ -373,7 +403,7 @@ body {
 @import "tailwindcss";
 
 :root {
-  --bg: #efeff2;
+  --bg: #f2f2ef;
   --fg: #111827;
   --card: #ffffff;
   --panel: #f5f7fb;
@@ -400,7 +430,7 @@ body {
 }
 
 .wall-root.theme-light {
-  background: radial-gradient(circle at 0% 0%, #f8f8fa 0%, #ececf0 40%, #e9e9ee 100%);
+  background: radial-gradient(circle at 0% 0%, #f8f8fa 0%, #f1d8a3 40%, #e9e9ee 100%);
 }
 
 .wall-root.theme-dark {

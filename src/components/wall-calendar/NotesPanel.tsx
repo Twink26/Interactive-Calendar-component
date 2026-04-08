@@ -48,7 +48,7 @@ export default function NotesPanel({
       <p className="notes-footer">
         {notes.length} characters
         {" • "}
-        {noteIsDirty ? "Unsaved changes" : hasSavedNote ? "Saved for this month" : "No saved note"}
+        {noteIsDirty ? "Unsaved changes" : hasSavedNote ? "Saved for this date" : "No saved note"}
       </p>
     </aside>
   );

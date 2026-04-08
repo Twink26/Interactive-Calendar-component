@@ -21,16 +21,18 @@ const MONTH_IMAGES: Record<number, string> = {
   11: "https://images.unsplash.com/photo-1418985991508-e47386d96a71?w=1200&q=80",
 };
 
-const MONTH_NOTES_KEY = "wall-calendar-month-notes-v1";
+const DATE_NOTES_KEY = "wall-calendar-date-notes-v1";
 
-function getStorageMonthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+function getStorageDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
 }
 
-function readStoredMonthNotes(): Record<string, string> {
+function readStoredDateNotes(): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = window.localStorage.getItem(MONTH_NOTES_KEY);
+    const raw = window.localStorage.getItem(DATE_NOTES_KEY);
     if (!raw) return {};
     return JSON.parse(raw) as Record<string, string>;
   } catch { return {}; }
@@ -42,20 +44,21 @@ const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct
 export default function WallCalendar() {
   const today = stripTime(new Date());
   const initialMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const initialMonthNotes = readStoredMonthNotes();
+  const initialDateNotes = readStoredDateNotes();
 
   const [viewDate, setViewDate] = useState(() => initialMonth);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
-  const [monthNotes, setMonthNotes] = useState<Record<string, string>>(() => initialMonthNotes);
-  const [notes, setNotes] = useState(() => initialMonthNotes[getStorageMonthKey(initialMonth)] ?? "");
+  const [activeNoteDate, setActiveNoteDate] = useState<Date>(today);
+  const [dateNotes, setDateNotes] = useState<Record<string, string>>(() => initialDateNotes);
+  const [notes, setNotes] = useState(() => initialDateNotes[getStorageDateKey(today)] ?? "");
   const [darkTheme, setDarkTheme] = useState(false);
 
   const days = useMemo(() => monthMatrix(viewDate), [viewDate]);
   const monthTitle = viewDate.toLocaleDateString(undefined, { month: "long", year: "numeric" });
   const monthName = viewDate.toLocaleDateString(undefined, { month: "long" });
-  const monthStorageKey = getStorageMonthKey(viewDate);
+  const activeDateKey = getStorageDateKey(activeNoteDate);
 
   const tempEnd = startDate && !endDate ? hoveredDate : endDate;
   const rangeStart = startDate && tempEnd ? (startDate < tempEnd ? startDate : tempEnd) : null;
@@ -63,31 +66,47 @@ export default function WallCalendar() {
 
   function handleDayClick(day: Date, withRange: boolean) {
     const clean = stripTime(day);
+    setActiveNoteDate(clean);
+    setNotes(dateNotes[getStorageDateKey(clean)] ?? "");
     if (!withRange || !startDate) { setStartDate(clean); setEndDate(clean); return; }
     if (clean < startDate) { setEndDate(startDate); setStartDate(clean); return; }
     setEndDate(clean);
   }
 
   const heroImg = MONTH_IMAGES[viewDate.getMonth()];
-  const savedNoteForMonth = monthNotes[monthStorageKey] ?? "";
-  const noteIsDirty = notes !== savedNoteForMonth;
+  const savedNoteForDate = dateNotes[activeDateKey] ?? "";
+  const noteIsDirty = notes !== savedNoteForDate;
 
   function changeMonth(nextDate: Date) {
     const clean = new Date(nextDate.getFullYear(), nextDate.getMonth(), 1);
     setViewDate(clean);
-    setNotes(monthNotes[getStorageMonthKey(clean)] ?? "");
   }
 
   function handleSaveNote() {
     const trimmed = notes.trim();
-    const next = { ...monthNotes };
-    if (trimmed) { next[monthStorageKey] = notes; } else { delete next[monthStorageKey]; }
-    setMonthNotes(next);
-    window.localStorage.setItem(MONTH_NOTES_KEY, JSON.stringify(next));
+    const next = { ...dateNotes };
+    if (trimmed) {
+      next[activeDateKey] = notes;
+    } else {
+      delete next[activeDateKey];
+    }
+    setDateNotes(next);
+    window.localStorage.setItem(DATE_NOTES_KEY, JSON.stringify(next));
+  }
+
+  function handleDeleteSavedNote(noteKey: string) {
+    const next = { ...dateNotes };
+    delete next[noteKey];
+    setDateNotes(next);
+    window.localStorage.setItem(DATE_NOTES_KEY, JSON.stringify(next));
+
+    if (noteKey === activeDateKey) {
+      setNotes("");
+    }
   }
 
   // Saved notes list for left panel
-  const savedNotesList = Object.entries(monthNotes)
+  const savedNotesList = Object.entries(dateNotes)
     .sort((a, b) => b[0].localeCompare(a[0]))
     .slice(0, 4);
 
@@ -101,9 +120,9 @@ export default function WallCalendar() {
           {/* Big date display */}
           <div className="sidebar-date-block">
             <span className="sidebar-weekday">{WEEKDAYS[today.getDay()]}</span>
-            <span className="sidebar-day-num">{today.getDate()}</span>
+            <span className="sidebar-day-num">{activeNoteDate.getDate()}</span>
             <span className="sidebar-month-year">
-              {MONTHS_SHORT[today.getMonth()]} {today.getFullYear()}
+              {MONTHS_SHORT[activeNoteDate.getMonth()]} {activeNoteDate.getFullYear()}
             </span>
           </div>
 
@@ -114,11 +133,27 @@ export default function WallCalendar() {
               <p className="sidebar-empty">No saved notes yet.</p>
             ) : (
               savedNotesList.map(([key, text]) => {
-                const [yr, mo] = key.split("-");
-                const label = `${MONTHS_SHORT[parseInt(mo, 10) - 1]} ${yr}`;
+                const [yr, mo, day] = key.split("-");
+                const label = `${MONTHS_SHORT[parseInt(mo, 10) - 1]} ${parseInt(day, 10)}, ${yr}`;
                 return (
                   <div key={key} className="sidebar-note-card">
-                    <span className="sidebar-note-month">{label}</span>
+                    <div className="sidebar-note-head">
+                      <span className="sidebar-note-month">{label}</span>
+                      <button
+                        type="button"
+                        className="sidebar-note-delete"
+                        onClick={() => handleDeleteSavedNote(key)}
+                        aria-label={`Delete saved note for ${label}`}
+                        title="Delete note"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4h8v2" />
+                          <path d="M6 6l1 14h10l1-14" />
+                          <path d="M10 11v6M14 11v6" />
+                        </svg>
+                      </button>
+                    </div>
                     <p className="sidebar-note-preview">
                       {text.length > 80 ? text.slice(0, 80) + "…" : text}
                     </p>
@@ -134,7 +169,7 @@ export default function WallCalendar() {
             <ul className="sidebar-tip-list">
               <li>Click a date to select it.</li>
               <li>Shift + click for a range.</li>
-              <li>Save notes per month.</li>
+              <li>Save notes per selected date.</li>
             </ul>
           </div>
 
@@ -217,7 +252,7 @@ export default function WallCalendar() {
                 notes={notes}
                 onNotesChange={setNotes}
                 onSaveNote={handleSaveNote}
-                hasSavedNote={Boolean(savedNoteForMonth)}
+                hasSavedNote={Boolean(savedNoteForDate)}
                 noteIsDirty={noteIsDirty}
               />
             </div>
