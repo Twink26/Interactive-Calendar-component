@@ -4,6 +4,7 @@ A polished, interactive wall calendar built with **Next.js 14 (App Router)** and
 
 ---
 
+ 
 ##  Features
 
 - **Wall calendar aesthetic** — hero image per month with an accent wedge overlay
