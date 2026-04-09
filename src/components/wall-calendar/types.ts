@@ -7,4 +7,5 @@ export type Holiday = {
   month: number;
   day: number;
   label: string;
+  color?: string;
 };

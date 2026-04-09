@@ -39,6 +39,93 @@ body {
   transition: background var(--color-t), color var(--color-t);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* ─── BACKGROUND AMBIENT ANIMATION ───────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/*
+  Three large blurred orbs sit behind everything.
+  They drift slowly using keyframes so the page always feels alive.
+  Uses pointer-events: none + z-index: 0 so they never interfere.
+  Colors are derived from --accent so they shift with the hero palette.
+*/
+
+.wall-root::before,
+.wall-root::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(90px);
+  opacity: 0.22;
+  transition: background var(--color-t);
+  will-change: transform;
+}
+
+/* Orb 1 — top-left, slow drift */
+.wall-root::before {
+  width: 520px;
+  height: 520px;
+  top: -140px;
+  left: -160px;
+  background: var(--accent);
+  animation: orb-drift-a 18s ease-in-out infinite alternate;
+}
+
+/* Orb 2 — bottom-right, opposite drift */
+.wall-root::after {
+  width: 440px;
+  height: 440px;
+  bottom: -120px;
+  right: -140px;
+  background: var(--accent);
+  animation: orb-drift-b 22s ease-in-out infinite alternate;
+  opacity: 0.16;
+}
+
+/* Third orb injected via .wall-layout::before — mid-screen accent */
+.wall-layout::before {
+  content: "";
+  position: fixed;
+  width: 300px;
+  height: 300px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(110px);
+  opacity: 0.10;
+  background: var(--accent);
+  animation: orb-drift-c 28s ease-in-out infinite alternate;
+  transition: background var(--color-t);
+}
+
+@keyframes orb-drift-a {
+  0%   { transform: translate(0px,   0px)   scale(1);    }
+  33%  { transform: translate(60px,  40px)  scale(1.08); }
+  66%  { transform: translate(20px,  80px)  scale(0.95); }
+  100% { transform: translate(80px,  20px)  scale(1.05); }
+}
+
+@keyframes orb-drift-b {
+  0%   { transform: translate(0px,   0px)   scale(1);    }
+  40%  { transform: translate(-50px, -30px) scale(1.10); }
+  70%  { transform: translate(-20px, -70px) scale(0.92); }
+  100% { transform: translate(-70px, -15px) scale(1.06); }
+}
+
+@keyframes orb-drift-c {
+  0%   { transform: translate(-50%, -50%) scale(1);    }
+  50%  { transform: translate(-44%, -56%) scale(1.15); }
+  100% { transform: translate(-56%, -44%) scale(0.90); }
+}
+
+/* Ensure layout children sit above the orbs */
+.wall-layout > * { position: relative; z-index: 1; }
+
 /* ─── Root ─────────────────────────────────────────────────────────────────── */
 .wall-root {
   height: 100vh;
@@ -47,6 +134,8 @@ body {
   padding: 1rem;
   background: var(--bg);
   transition: background var(--color-t);
+  position: relative;
+  overflow: hidden;
 }
 
 /* ─── Layout ───────────────────────────────────────────────────────────────── */
@@ -56,6 +145,7 @@ body {
   grid-template-columns: 240px 1fr;
   gap: 1.5rem;
   height: calc(100vh - 2rem);
+  position: relative;
 }
 
 /* ─── Sidebar ──────────────────────────────────────────────────────────────── */
@@ -202,7 +292,6 @@ body {
   height: 100%;
   display: flex;
   flex-direction: column;
-  /* Tinted shadow so the card sits on bg with visible depth */
   box-shadow:
     0 2px 0 var(--border),
     0 30px 80px color-mix(in srgb, var(--accent) 18%, transparent);
@@ -222,7 +311,6 @@ body {
   transition: background var(--color-t);
 }
 
-/* Two stacked layers — cross-fade via opacity */
 .hero-layer {
   position: absolute;
   inset: 0;
@@ -353,13 +441,17 @@ body {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 10px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   cursor: pointer;
   color: var(--fg);
   font-size: 0.9rem;
   position: relative;
   z-index: 0;
+  padding: 2px 0;
   transition:
     background var(--color-t),
     border-color var(--color-t),
@@ -368,9 +460,11 @@ body {
     transform var(--fast-t);
 }
 
-.day-cell:hover { transform: translateY(-2px); box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 20%, transparent); }
+.day-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 20%, transparent);
+}
 .day-cell.faded { color: var(--muted); }
-.day-cell small { font-size: 0.56rem; color: var(--accent); transition: color var(--color-t); }
 
 .day-cell.today {
   border-color: var(--accent);
@@ -403,8 +497,56 @@ body {
 .day-cell.in-range.row-edge-right,
 .day-cell.range-end.row-edge-right  { border-radius: 0 10px 10px 0; }
 
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* ─── HOLIDAY DOT ─────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/*
+  A small coloured dot below the date number.
+  The color is set inline from HOLIDAY_COLORS so each holiday
+  has its own distinct colour (gold for New Year, pink for Valentine's, etc.)
+  On range-start / range-end cells we keep the dot visible by making it white.
+*/
+
+.holiday-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background var(--color-t), transform var(--fast-t);
+}
+
+/* Pulse animation draws the eye to holidays */
+.day-cell.has-holiday:not(.range-start):not(.range-end) .holiday-dot {
+  animation: dot-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1);    opacity: 1;    }
+  50%       { transform: scale(1.55); opacity: 0.75; }
+}
+
+/* On selected range endpoints, override to white so dot stays visible */
+.day-cell.range-start .holiday-dot,
+.day-cell.range-end   .holiday-dot {
+  background: rgba(255, 255, 255, 0.85) !important;
+  animation: none;
+}
+
+/* Faded (out-of-month) holiday dot is dimmer */
+.day-cell.faded .holiday-dot {
+  opacity: 0.45;
+}
+
 /* ─── Notes ────────────────────────────────────────────────────────────────── */
-.notes-top h2 { margin: 0; font-size: 1.28rem; font-weight: 600; color: var(--fg); transition: color var(--color-t); }
+.notes-top h2 {
+  margin: 0;
+  font-size: 1.28rem;
+  font-weight: 600;
+  color: var(--fg);
+  transition: color var(--color-t);
+}
 
 .notes-month-tag {
   margin: -0.1rem 0 0.35rem;
@@ -533,12 +675,243 @@ body {
   100% { background: transparent; }
 }
 
-/* ─── Responsive ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* ─── RESPONSIVE ──────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Tablet  900px ───────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .wall-root    { height: auto; min-height: 100vh; overflow: auto; place-items: start center; }
-  .wall-layout  { grid-template-columns: 1fr; height: auto; }
-  .wall-content { grid-template-columns: 1fr; }
+  .wall-root {
+    height: auto;
+    min-height: 100vh;
+    overflow: auto;
+    place-items: start center;
+    padding: 0.75rem;
+  }
+
+  /* Orbs scale down on tablet */
+  .wall-root::before { width: 360px; height: 360px; opacity: 0.18; filter: blur(70px); }
+  .wall-root::after  { width: 300px; height: 300px; opacity: 0.13; filter: blur(70px); }
+
+  .wall-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 0.75rem;
+  }
+
+  .left-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    padding: 1rem;
+    border-radius: 14px;
+    gap: 0.75rem;
+  }
+
+  .sidebar-date-block {
+    border-bottom: none;
+    border-right: 1px solid var(--border);
+    padding-bottom: 0;
+    padding-right: 0.75rem;
+    min-width: 80px;
+  }
+
+  .sidebar-day-num { font-size: 2.2rem; }
+
+  .sidebar-notes-block { flex: 1; min-width: 160px; }
+
+  .sidebar-instructions { display: none; }
+
+  .calendar-shell { max-width: 100%; }
+
+  .wall-card { height: auto; max-width: 100%; }
+
+  .wall-hero { height: 180px; }
+
+  .hero-wedge { width: 180px; height: 80px; }
+
+  .hero-month { font-size: 1.2rem; }
+
+  .wall-content {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
   .calendar-pane { justify-content: flex-start; }
-  .calendar-toolbar strong { font-size: 1.15rem; }
-  .notes-input { min-height: 190px; flex: initial; }
+
+  .calendar-toolbar strong { font-size: 1.1rem; }
+
+  .notes-input { min-height: 140px; flex: initial; }
+
+  .flip-stage { perspective: none; }
+}
+
+/* ─── Mobile  600px ───────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .wall-root {
+    padding: 0;
+    background: var(--card);
+    overflow: hidden; /* clip orbs cleanly on small screens */
+  }
+
+  /* Orbs much smaller on mobile — subtle, not distracting */
+  .wall-root::before {
+    width: 240px;
+    height: 240px;
+    opacity: 0.14;
+    filter: blur(60px);
+    top: -80px;
+    left: -80px;
+  }
+  .wall-root::after {
+    width: 200px;
+    height: 200px;
+    opacity: 0.10;
+    filter: blur(60px);
+    bottom: -60px;
+    right: -60px;
+  }
+  .wall-layout::before { display: none; }
+
+  .wall-layout { gap: 0; }
+
+  .left-sidebar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1rem;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    gap: 0.5rem;
+  }
+
+  .sidebar-date-block {
+    border-right: none;
+    padding-right: 0;
+    padding-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .sidebar-weekday { display: none; }
+
+  .sidebar-day-num { font-size: 1.8rem; line-height: 1; }
+
+  .sidebar-month-year { font-size: 0.82rem; }
+
+  .sidebar-notes-block { flex: 1; }
+
+  .sidebar-note-card { display: none; }
+
+  .sidebar-empty { font-size: 0.72rem; }
+
+  .sidebar-instructions { display: none; }
+
+  .wall-card {
+    height: auto;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+  }
+
+  .wall-hero { height: 140px; }
+
+  .hero-wedge { width: 140px; height: 64px; padding: 0.5rem 0.75rem; }
+
+  .hero-year  { font-size: 0.72rem; }
+  .hero-month { font-size: 1rem; }
+
+  .wall-content {
+    grid-template-columns: 1fr;
+    padding: 0.6rem;
+    gap: 0.6rem;
+    background: var(--bg);
+  }
+
+  .calendar-pane,
+  .notes-pane { border-radius: 12px; padding: 0.75rem; }
+
+  .calendar-toolbar { margin-bottom: 0.5rem; }
+
+  .calendar-toolbar strong { font-size: 1rem; }
+
+  .mini-btn { padding: 0.25rem 0.65rem; font-size: 0.7rem; }
+
+  .day-cell { font-size: 0.78rem; border-radius: 8px; }
+
+  .week-row { font-size: 0.62rem; gap: 0.2rem; }
+
+  .calendar-grid { gap: 0.2rem; }
+
+  /* Smaller holiday dots on mobile */
+  .holiday-dot { width: 4px; height: 4px; }
+
+  /* Adjust range radii to match tighter cells */
+  .day-cell.range-start               { border-radius: 8px 0 0 8px; }
+  .day-cell.range-end                 { border-radius: 0 8px 8px 0; }
+  .day-cell.range-start.range-end     { border-radius: 8px; }
+  .day-cell.in-range.row-edge-left,
+  .day-cell.range-start.row-edge-left { border-radius: 8px 0 0 8px; }
+  .day-cell.in-range.row-edge-right,
+  .day-cell.range-end.row-edge-right  { border-radius: 0 8px 8px 0; }
+
+  .notes-input { min-height: 120px; flex: initial; font-size: 0.9rem; }
+
+  .flip-stage { perspective: none; }
+
+  /* Disable flip animation on mobile — causes layout jank on touch devices */
+  .flip-out-next,
+  .flip-out-prev,
+  .flip-in-next,
+  .flip-in-prev { animation: none !important; }
+
+  .flip-shadow-next,
+  .flip-shadow-prev { animation: none !important; }
+
+  /* Pause orb animation on mobile to save battery */
+  .wall-root::before,
+  .wall-root::after { animation-play-state: paused; }
+}
+
+/* ─── Very small phones  380px ────────────────────────────────────────────── */
+@media (max-width: 380px) {
+  .wall-hero { height: 110px; }
+
+  .hero-wedge { width: 120px; height: 54px; }
+
+  .hero-month { font-size: 0.85rem; }
+  .hero-year  { font-size: 0.65rem; }
+
+  .day-cell { font-size: 0.68rem; }
+
+  .week-row { font-size: 0.58rem; }
+
+  .calendar-toolbar strong { font-size: 0.9rem; }
+
+  .mini-btn { padding: 0.2rem 0.5rem; font-size: 0.65rem; }
+
+  .sidebar-day-num { font-size: 1.5rem; }
+
+  .notes-input { min-height: 100px; }
+
+  .holiday-dot { width: 3px; height: 3px; }
+}
+
+/* ─── Reduced motion — respect user preference ────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .wall-root::before,
+  .wall-root::after,
+  .wall-layout::before { animation: none !important; }
+
+  .holiday-dot { animation: none !important; }
+
+  .flip-out-next,
+  .flip-out-prev,
+  .flip-in-next,
+  .flip-in-prev { animation: none !important; }
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { WEEK_DAYS } from "./constants";
-import { formatDate, getHolidayLabel, isSameDay, stripTime } from "./date-utils";
+import { formatDate, getHolidayInfo, isSameDay, stripTime } from "./date-utils";
 import { DayCell } from "./types";
 
 type CalendarGridProps = {
@@ -34,27 +34,18 @@ export default function CalendarGrid({
   onDayHover,
   onDayClick,
 }: CalendarGridProps) {
-  // What is currently rendered inside the flip page
   const [visibleTitle, setVisibleTitle] = useState(monthTitle);
-  const [visibleDays, setVisibleDays] = useState<DayCell[]>(days);
+  const [visibleDays,  setVisibleDays]  = useState<DayCell[]>(days);
+  const [flipState,    setFlipState]    = useState<FlipState>("idle");
+  const [flipDir,      setFlipDir]      = useState<"prev" | "next">("next");
 
-  const [flipState, setFlipState] = useState<FlipState>("idle");
-  const [flipDir, setFlipDir] = useState<"prev" | "next">("next");
-
-  // Store the pending navigate callback so we can call it at the right moment
-  const pendingNavigate = useRef<(() => void) | null>(null);
-
-  // When parent sends new data (after navigate was called), store it
-  // but don't show it yet — we show it when flip-out ends
-  const incomingTitle = useRef(monthTitle);
-  const incomingDays = useRef(days);
+  const pendingNavigate  = useRef<(() => void) | null>(null);
+  const incomingTitle    = useRef(monthTitle);
+  const incomingDays     = useRef(days);
 
   useEffect(() => {
-    // Only update incoming refs when we are expecting new data (flipping-out)
-    // OR when idle (initial load / external change)
     incomingTitle.current = monthTitle;
-    incomingDays.current = days;
-
+    incomingDays.current  = days;
     if (flipState === "idle") {
       setVisibleTitle(monthTitle);
       setVisibleDays(days);
@@ -70,14 +61,10 @@ export default function CalendarGrid({
 
   function handleAnimationEnd() {
     if (flipState === "flipping-out") {
-      // 1. Call navigate now — parent state updates, useEffect fires,
-      //    incoming refs get the new month data
       if (pendingNavigate.current) {
         pendingNavigate.current();
         pendingNavigate.current = null;
       }
-      // 2. Small timeout so React can flush the state update and
-      //    populate incomingTitle/incomingDays before we swap
       setTimeout(() => {
         setVisibleTitle(incomingTitle.current);
         setVisibleDays(incomingDays.current);
@@ -90,13 +77,13 @@ export default function CalendarGrid({
 
   return (
     <section className="calendar-pane">
-      {/* Toolbar stays outside the flip so the title updates instantly */}
       <div className="calendar-toolbar">
         <button
           type="button"
           className="mini-btn"
           onClick={() => triggerFlip("prev", onPrevMonth)}
           disabled={flipState !== "idle"}
+          aria-label="Previous month"
         >
           ← Prev
         </button>
@@ -106,6 +93,7 @@ export default function CalendarGrid({
           className="mini-btn"
           onClick={() => triggerFlip("next", onNextMonth)}
           disabled={flipState !== "idle"}
+          aria-label="Next month"
         >
           Next →
         </button>
@@ -121,7 +109,7 @@ export default function CalendarGrid({
           ].filter(Boolean).join(" ")}
           onAnimationEnd={handleAnimationEnd}
         >
-          {/* Front face — calendar content */}
+          {/* Front face */}
           <div className="flip-face flip-front">
             <div className="week-row">
               {WEEK_DAYS.map((day) => (
@@ -131,13 +119,13 @@ export default function CalendarGrid({
 
             <div className="calendar-grid">
               {visibleDays.map(({ date, inCurrentMonth }, idx) => {
-                const holiday = getHolidayLabel(date);
-                const isStart   = isSameDay(startDate, date);
-                const isEnd     = isSameDay(endDate, date);
-                const isToday   = isSameDay(today, date);
+                const holiday  = getHolidayInfo(date);
+                const isStart  = isSameDay(startDate, date);
+                const isEnd    = isSameDay(endDate,   date);
+                const isToday  = isSameDay(today,     date);
                 const isInRange =
                   !!rangeStart &&
-                  !!rangeEnd &&
+                  !!rangeEnd   &&
                   stripTime(date) > stripTime(rangeStart) &&
                   stripTime(date) < stripTime(rangeEnd);
 
@@ -154,18 +142,26 @@ export default function CalendarGrid({
                     onClick={(e) => onDayClick(date, e.shiftKey)}
                     className={[
                       "day-cell",
-                      inCurrentMonth ? "current" : "faded",
-                      isToday    ? "today"       : "",
-                      isInRange  ? "in-range"    : "",
-                      isStart    ? "range-start" : "",
-                      isEnd      ? "range-end"   : "",
+                      inCurrentMonth ? "current"     : "faded",
+                      isToday        ? "today"       : "",
+                      isInRange      ? "in-range"    : "",
+                      isStart        ? "range-start" : "",
+                      isEnd          ? "range-end"   : "",
+                      holiday        ? "has-holiday" : "",
                       (isInRange || isStart || isEnd) && isRowStart ? "row-edge-left"  : "",
                       (isInRange || isStart || isEnd) && isRowEnd   ? "row-edge-right" : "",
                     ].filter(Boolean).join(" ")}
-                    aria-label={formatDate(date)}
+                    aria-label={`${formatDate(date)}${holiday ? ` — ${holiday.label}` : ""}`}
+                    title={holiday?.label}
                   >
                     <span>{date.getDate()}</span>
-                    {holiday && <small title={holiday}>●</small>}
+                    {holiday && (
+                      <span
+                        className="holiday-dot"
+                        style={{ background: holiday.color }}
+                        aria-hidden="true"
+                      />
+                    )}
                   </button>
                 );
               })}
