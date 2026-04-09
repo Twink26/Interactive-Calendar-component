@@ -1,26 +1,25 @@
 "use client";
 
-import Image from "next/image";
+
 import { useMemo, useState } from "react";
 import CalendarGrid from "./CalendarGrid";
 import { monthMatrix, stripTime } from "./date-utils";
 import NotesPanel from "./NotesPanel";
 
 const MONTH_IMAGES: Record<number, string> = {
-  0:  "https://images.unsplash.com/photo-1483664852095-d6cc6870702d?w=1200&q=80",
-  1:  "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&q=80",
-  2:  "https://images.unsplash.com/photo-1490750967868-88df5691cc43?w=1200&q=80",
-  3:  "https://images.unsplash.com/photo-1462275646964-a0e3386b89fa?w=1200&q=80",
-  4:  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=80",
-  5:  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80",
-  6:  "https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?w=1200&q=80",
-  7:  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=80",
-  8:  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80",
-  9:  "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1200&q=80",
-  10: "https://images.unsplash.com/photo-1477601263568-180e2c6d046e?w=1200&q=80",
-  11: "https://images.unsplash.com/photo-1418985991508-e47386d96a71?w=1200&q=80",
+  0:  "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1200&q=80", 
+  1:  "https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=1200&q=80",
+  2:  "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1200&q=80", 
+  3:  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&q=80", 
+  4:  "https://images.unsplash.com/photo-1504192010706-dd7f569ee2be?w=1200&q=80", 
+  5:  "https://images.unsplash.com/photo-1446941611757-91d2c3bd3d45?w=1200&q=80",
+  6:  "https://images.unsplash.com/photo-1465101162946-4377e57745c3?w=1200&q=80", 
+  7:  "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=1200&q=80", 
+  8:  "https://images.unsplash.com/photo-1417577097439-425fb7dec05e?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Sep — Milky Way over mountains
+  9:  "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=1200&q=80", 
+  10: "https://images.unsplash.com/photo-1516331138075-f3adc1e149cd?q=80&w=1208&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Nov — star cluster
+  11: "https://images.unsplash.com/photo-1462332420958-a05d1e002413?q=80&w=1507&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // Dec — deep galaxy field
 };
-
 const DATE_NOTES_KEY = "wall-calendar-date-notes-v1";
 
 function getStorageDateKey(date: Date): string {
@@ -210,14 +209,11 @@ export default function WallCalendar() {
         <div className="calendar-shell">
           <div className="wall-card">
             <div className="wall-hero">
-              <Image
-                src={heroImg}
-                alt={monthName}
-                fill
-                sizes="(max-width: 960px) 100vw, 860px"
-                className="hero-image"
-                priority
-              />
+            <img
+  src={heroImg}
+  alt={monthName}
+  className="hero-image"
+/>
               <div className="hero-wedge">
                 <div className="hero-wedge-text">
                   <span className="hero-year">{viewDate.getFullYear()}</span>
