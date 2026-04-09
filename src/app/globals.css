@@ -43,6 +43,13 @@ body {
 /* ─── BACKGROUND AMBIENT ANIMATION ───────────────────────────────────────── */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
+/*
+  Three large blurred orbs sit behind everything.
+  They drift slowly using keyframes so the page always feels alive.
+  Uses pointer-events: none + z-index: 0 so they never interfere.
+  Colors are derived from --accent so they shift with the hero palette.
+*/
+
 .wall-root::before,
 .wall-root::after {
   content: "";
@@ -77,7 +84,7 @@ body {
   opacity: 0.16;
 }
 
-/* Third orb — mid-screen accent */
+/* Third orb injected via .wall-layout::before — mid-screen accent */
 .wall-layout::before {
   content: "";
   position: fixed;
@@ -494,6 +501,13 @@ body {
 /* ─── HOLIDAY DOT ─────────────────────────────────────────────────────────── */
 /* ═══════════════════════════════════════════════════════════════════════════ */
 
+/*
+  A small coloured dot below the date number.
+  The color is set inline from HOLIDAY_COLORS so each holiday
+  has its own distinct colour (gold for New Year, pink for Valentine's, etc.)
+  On range-start / range-end cells we keep the dot visible by making it white.
+*/
+
 .holiday-dot {
   display: block;
   width: 5px;
@@ -503,6 +517,7 @@ body {
   transition: background var(--color-t), transform var(--fast-t);
 }
 
+/* Pulse animation draws the eye to holidays */
 .day-cell.has-holiday:not(.range-start):not(.range-end) .holiday-dot {
   animation: dot-pulse 2.8s ease-in-out infinite;
 }
@@ -512,12 +527,14 @@ body {
   50%       { transform: scale(1.55); opacity: 0.75; }
 }
 
+/* On selected range endpoints, override to white so dot stays visible */
 .day-cell.range-start .holiday-dot,
 .day-cell.range-end   .holiday-dot {
   background: rgba(255, 255, 255, 0.85) !important;
   animation: none;
 }
 
+/* Faded (out-of-month) holiday dot is dimmer */
 .day-cell.faded .holiday-dot {
   opacity: 0.45;
 }
@@ -672,6 +689,7 @@ body {
     padding: 0.75rem;
   }
 
+  /* Orbs scale down on tablet */
   .wall-root::before { width: 360px; height: 360px; opacity: 0.18; filter: blur(70px); }
   .wall-root::after  { width: 300px; height: 300px; opacity: 0.13; filter: blur(70px); }
 
@@ -737,6 +755,7 @@ body {
     overflow: hidden;
   }
 
+  /* Orbs much smaller on mobile — subtle, not distracting */
   .wall-root::before {
     width: 240px;
     height: 240px;
@@ -819,46 +838,31 @@ body {
   .notes-pane { border-radius: 12px; padding: 0.75rem; }
 
   /* ── MOBILE CALENDAR FIX ──────────────────────────────────────────────────
-     The flip-stage was collapsing to zero height because:
-       1. flip-stage used flex:1 + min-height:0 inside a height:auto parent
-       2. flip-face used position:absolute; inset:0 which made it invisible
-          when the parent has no explicit height
-     Fix: switch to normal document flow on mobile so the grid renders at
-     its natural height.
+     The old flip-stage used flex:1 + min-height:0 with flip-face as
+     position:absolute; inset:0 — on mobile (height:auto parents) absolute
+     children have nothing to anchor to and render at 0px height, making
+     the entire calendar grid invisible.
+
+     The CalendarGrid component now detects mobile via a matchMedia hook
+     and renders a plain .mobile-grid-wrapper div instead of the flip DOM,
+     so the grid participates in normal document flow and takes natural height.
+
+     These CSS rules support that wrapper and clean up leftover flip styles.
   ─────────────────────────────────────────────────────────────────────────── */
 
-  /* 1. Let flip-stage grow to fit its content instead of collapsing */
-  .flip-stage {
-    flex: none;
-    height: auto;
-    min-height: auto;
-    perspective: none;
-  }
-
-  /* 2. Pull flip-page & flip-face out of absolute positioning so they
-        participate in normal flow and push the parent to full height */
-  .flip-page {
-    position: relative;
-    height: auto;
-    transform-style: flat;
-  }
-
-  .flip-face {
-    position: relative;
-    inset: auto;
-    height: auto;
-    backface-visibility: visible;
-    -webkit-backface-visibility: visible;
-  }
-
-  /* 3. flip-back should stay hidden on mobile (no 3D flip) */
-  .flip-back { display: none; }
-
-  /* 4. Remove overflow:hidden that clips the grid when height is tight */
+  /* Remove overflow clip — never let the pane hide the grid */
   .calendar-pane { overflow: visible; }
 
-  /* 5. Fallback min-height for day cells — aspect-ratio can collapse
-        in some Android browsers inside a flex container */
+  /* Flat wrapper rendered by CalendarGrid on mobile screens */
+  .mobile-grid-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  /* Fallback: aspect-ratio alone can collapse cells on some Android browsers
+     inside a flex container — min-height prevents that */
   .day-cell { min-height: 36px; }
 
   /* ── END MOBILE CALENDAR FIX ─────────────────────────────────────────── */
@@ -875,8 +879,10 @@ body {
 
   .calendar-grid { gap: 0.2rem; }
 
+  /* Smaller holiday dots on mobile */
   .holiday-dot { width: 4px; height: 4px; }
 
+  /* Adjust range radii to match tighter cells */
   .day-cell.range-start               { border-radius: 8px 0 0 8px; }
   .day-cell.range-end                 { border-radius: 0 8px 8px 0; }
   .day-cell.range-start.range-end     { border-radius: 8px; }
@@ -887,7 +893,7 @@ body {
 
   .notes-input { min-height: 120px; flex: initial; font-size: 0.9rem; }
 
-  /* Disable flip animation on mobile */
+  /* Disable flip animation on mobile — causes layout jank on touch devices */
   .flip-out-next,
   .flip-out-prev,
   .flip-in-next,
